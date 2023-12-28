@@ -1,0 +1,2 @@
+run inside schema folder to apply migrations
+goose mysql "root:@/banana?parseTime=true" up
