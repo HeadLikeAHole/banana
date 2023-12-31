@@ -110,6 +110,7 @@ const authSlice = createSlice({
 });
 
 export const selectUser = state => state.auth;
+export const selectUserToken = state => state.auth.token;
 
 export const { signOut} = authSlice.actions;
 

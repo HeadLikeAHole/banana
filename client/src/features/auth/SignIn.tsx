@@ -28,7 +28,12 @@ export function action(dispatch) {
 
 export default function SignIn() {
   const navigate = useNavigate();
-  const { isAuthenticated, status, message: error } = useAppSelector(selectUser);
+  const { isAuthenticated, status, message } = useAppSelector(selectUser);
+
+  let error;
+  if (status === "error") {
+    error = message;
+  }
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -84,7 +89,7 @@ export default function SignIn() {
             fullWidth
             variant="contained"
             sx={{ mt: 3, mb: 2 }}
-            disabled={status === 'submitting'}
+            disabled={status === 'loading'}
           >
             Sign In
           </Button>

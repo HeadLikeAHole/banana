@@ -61,5 +61,9 @@ func apiRouter() http.Handler {
 		r.Post("/reset-password", handlers.ResetPassword)
 	})
 
+	r.Route("/products", func(r chi.Router) {
+		r.Post("/", handlers.CreateProduct)
+	})
+
 	return r
 }

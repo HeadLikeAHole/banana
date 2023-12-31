@@ -20,3 +20,6 @@ function start() {
 }
 
 start();
+
+// todo fix typescript errors
+// todo handle errors, particularly 404

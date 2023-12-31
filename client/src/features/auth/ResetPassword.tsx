@@ -6,19 +6,21 @@ import {
   useActionData,
   useNavigation,
   useSearchParams
-} from "react-router-dom";
-import {server} from "../../config.ts";
-import {showAlert} from "../alerts/alertsSlice.ts";
-import {Helmet} from "react-helmet";
-import Box from "@mui/material/Box";
-import Avatar from "@mui/material/Avatar";
-import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
-import Typography from "@mui/material/Typography";
-import TextField from "@mui/material/TextField";
-import Button from "@mui/material/Button";
-import Grid from "@mui/material/Grid";
-import Link from "@mui/material/Link";
-import Container from "@mui/material/Container";
+} from 'react-router-dom';
+import { Helmet } from 'react-helmet';
+import Box from '@mui/material/Box';
+import Avatar from '@mui/material/Avatar';
+import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+import Typography from '@mui/material/Typography';
+import TextField from '@mui/material/TextField';
+import Button from '@mui/material/Button';
+import Grid from '@mui/material/Grid';
+import Link from '@mui/material/Link';
+import Container from '@mui/material/Container';
+
+import { server } from '../../config.ts';
+import { showAlert } from '../alerts/alertsSlice.ts';
+import ValidationError from '../../components/ValidationError.tsx';
 
 export function action(dispatch) {
   return async function({ request }: ActionFunctionArgs) {
@@ -37,6 +39,9 @@ export function action(dispatch) {
       const responseData = await response.json();
       if (responseData.errors) {
         return responseData.errors
+      }
+      if (response.status === 400) {
+        return responseData
       }
       throw new Error(responseData.message)
     }
@@ -99,6 +104,7 @@ export default function ResetPassword() {
             id="confirm_password"
             autoComplete="current-password"
           />
+          {errors?.message && <ValidationError error={errors.message} />}
           <input type="hidden" name="token" value={token ? token : ""} />
           <Button
             type="submit"

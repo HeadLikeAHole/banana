@@ -8,6 +8,7 @@ import SignIn, { action as signInAction } from './features/auth/SignIn.tsx';
 import { action as signOutAction } from './components/Navbar.tsx';
 import RequestPasswordReset, { action as requestPasswordResetAction } from './features/auth/RequestPasswordReset.tsx';
 import ResetPassword, { action as resetPasswordAction } from './features/auth/ResetPassword.tsx';
+import CreateProduct, { action as createProductAction } from './features/products/CreateProduct.tsx';
 
 export default function Router() {
   const dispatch = useAppDispatch();
@@ -45,6 +46,11 @@ export default function Router() {
           element: <ResetPassword />,
           action: resetPasswordAction(dispatch)
         },
+        {
+          path: '/products/create',
+          element: <CreateProduct />,
+          action: createProductAction(dispatch)
+        }
       ]
     },
   ]);
@@ -53,5 +59,3 @@ export default function Router() {
     <RouterProvider router={router} />
   );
 }
-
-// todo password reset

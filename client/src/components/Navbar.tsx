@@ -15,7 +15,10 @@ import SvgIcon from '@mui/material/SvgIcon';
 import Grid from '@mui/material/Grid';
 import Skeleton from '@mui/material/Skeleton';
 import { grey } from '@mui/material/colors';
-import { NavLink, Link, ActionFunctionArgs, redirect } from 'react-router-dom';
+import { styled, alpha } from '@mui/material/styles';
+import InputBase from '@mui/material/InputBase';
+import SearchIcon from '@mui/icons-material/Search';
+import { NavLink, Link, redirect } from 'react-router-dom';
 
 import { useAppSelector } from '../hooks.ts';
 import { selectUser, signOut } from '../features/auth/authSlice.ts';
@@ -24,14 +27,14 @@ import Logo from './Logo.tsx';
 import SignOutDialog from './SignOutDialog.tsx';
 
 export function action(dispatch) {
-  return async function({ request }: ActionFunctionArgs) {
+  return async function() {
     dispatch(signOut());
     dispatch(showAlert({ type: 'success', message: 'You have successfully signed out' }));
 
     return redirect('/');
   }
 }
-const pages = ['Products', 'Pricing', 'Blog'];
+
 export default function Navbar() {
   const [anchorElNav, setAnchorElNav] = useState<null | HTMLElement>(null);
   const [anchorElUser, setAnchorElUser] = useState<null | HTMLElement>(null);
@@ -78,6 +81,13 @@ export default function Navbar() {
         open={Boolean(anchorElUser)}
         onClose={handleCloseUserMenu}
       >
+        <MenuItem
+          component={Link}
+          to="/products/create"
+          onClick={handleCloseUserMenu}
+        >
+          <Typography textAlign="center">Create Product</Typography>
+        </MenuItem>
         <MenuItem onClick={() => setDialogOpen(true)}>
           <Typography textAlign="center">Sign Out</Typography>
         </MenuItem>
@@ -181,11 +191,9 @@ export default function Navbar() {
                   display: { xs: 'block', md: 'none' },
                 }}
               >
-                {pages.map((page) => (
-                  <MenuItem key={page}>
-                    <Typography textAlign="center">{page}</Typography>
-                  </MenuItem>
-                ))}
+                <MenuItem>
+                  <Typography textAlign="center">Catalog</Typography>
+                </MenuItem>
               </Menu>
             </Box>
 
@@ -212,16 +220,23 @@ export default function Navbar() {
             </Typography>
 
             <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
-              {pages.map((page) => (
-                <Button
-                  key={page}
-                  onClick={handleCloseNavMenu}
-                  sx={{ my: 2, color: 'white', display: 'block' }}
-                >
-                  {page}
-                </Button>
-              ))}
+              <Button
+                onClick={handleCloseNavMenu}
+                sx={{ my: 2, color: 'white', display: 'block' }}
+              >
+                Catalog
+              </Button>
             </Box>
+
+            <Search>
+              <SearchIconWrapper>
+                <SearchIcon />
+              </SearchIconWrapper>
+              <StyledInputBase
+                placeholder="Search…"
+                inputProps={{ 'aria-label': 'search' }}
+              />
+            </Search>
 
             <Box sx={{ flexGrow: 0 }}>
               {userState.status === 'loading' ? (
@@ -236,3 +251,45 @@ export default function Navbar() {
     </>
   );
 }
+
+const Search = styled('div')(({ theme }) => ({
+  position: 'relative',
+  borderRadius: theme.shape.borderRadius,
+  backgroundColor: alpha(theme.palette.common.white, 0.15),
+  '&:hover': {
+    backgroundColor: alpha(theme.palette.common.white, 0.25),
+  },
+  marginRight: theme.spacing(2),
+  marginLeft: 0,
+  width: '100%',
+  [theme.breakpoints.up('sm')]: {
+    marginLeft: theme.spacing(3),
+    width: 'auto',
+  },
+}));
+
+const SearchIconWrapper = styled('div')(({ theme }) => ({
+  padding: theme.spacing(0, 2),
+  height: '100%',
+  position: 'absolute',
+  pointerEvents: 'none',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+}));
+
+const StyledInputBase = styled(InputBase)(({ theme }) => ({
+  color: 'inherit',
+  '& .MuiInputBase-input': {
+    padding: theme.spacing(1, 1, 1, 0),
+    // vertical padding + font size from searchIcon
+    paddingLeft: `calc(1em + ${theme.spacing(4)})`,
+    transition: theme.transitions.create('width'),
+    width: '100%',
+    [theme.breakpoints.up('md')]: {
+      width: '20ch',
+    },
+  },
+}));
+
+// todo improve search bar

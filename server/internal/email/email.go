@@ -2,6 +2,7 @@ package email
 
 import (
 	"github.com/HeadLikeAHole/banana/server/internal/types"
+	"github.com/matcornic/hermes/v2"
 	mail "github.com/xhit/go-simple-mail/v2"
 	"strconv"
 	"time"
@@ -27,13 +28,13 @@ func (d *Dispatcher) Run() {
 	for i := 0; i < d.maxWorkers; i++ {
 		go func() {
 			for email := range app.EmailQueue {
-				sendEmail(email)
+				d.send(email)
 			}
 		}()
 	}
 }
 
-func sendEmail(msg types.Email) {
+func (d *Dispatcher) send(msg types.Email) {
 	server := mail.NewSMTPClient()
 	server.Host = settings.Host
 	port, err := strconv.Atoi(settings.Port)
@@ -74,7 +75,7 @@ func sendEmail(msg types.Email) {
 		}
 	}
 
-	plainText, html, err := generateEmailTemplate(msg.Template)
+	plainText, html, err := d.generateEmailTemplate(msg.Template)
 	if err != nil {
 		app.ErrorLog.Println(err)
 	}
@@ -89,4 +90,48 @@ func sendEmail(msg types.Email) {
 	}
 }
 
-// todo make a function for sending emails and templates
+func (d *Dispatcher) generateEmailTemplate(t types.EmailTemplate) (string, string, error) {
+	h := hermes.Hermes{
+		// Optional Theme
+		// Theme: new(Default)
+		Product: hermes.Product{
+			// Appears in header & footer of e-mails
+			Name: "Banana",
+			Link: "",
+			// Optional product logo
+			Logo: "",
+		},
+	}
+
+	email := hermes.Email{
+		Body: hermes.Body{
+			Name:   "dear user",
+			Intros: t.Intros,
+			Actions: []hermes.Action{
+				{
+					Instructions: t.Instructions,
+					Button: hermes.Button{
+						Color: t.ButtonColor, // Optional action button color
+						Text:  t.ButtonText,
+						Link:  t.ButtonLink,
+					},
+				},
+			},
+			Outros: t.Outros,
+		},
+	}
+
+	// Generate the plaintext version of the e-mail (for clients that do not support xHTML)
+	plainText, err := h.GeneratePlainText(email)
+	if err != nil {
+		return "", "", err
+	}
+
+	// Generate an HTML email with the provided contents (for modern clients)
+	html, err := h.GenerateHTML(email)
+	if err != nil {
+		return "", "", err
+	}
+
+	return plainText, html, nil
+}
