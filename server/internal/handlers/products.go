@@ -5,7 +5,9 @@ import (
 	"github.com/HeadLikeAHole/banana/server/internal/helpers"
 	"github.com/HeadLikeAHole/banana/server/internal/tx"
 	"github.com/HeadLikeAHole/banana/server/internal/types"
+	"github.com/go-chi/chi/v5"
 	"net/http"
+	"strconv"
 )
 
 func CreateProduct(w http.ResponseWriter, r *http.Request) {
@@ -39,7 +41,7 @@ func CreateProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = tx.CreateProduct(r.Context(), db.CreateProductParams{
+	productID, err := tx.CreateProduct(r.Context(), db.CreateProductParams{
 		UserID:      int64(userID),
 		Title:       data.Title,
 		Description: data.Description,
@@ -51,5 +53,33 @@ func CreateProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	helpers.WriteJSON(w, http.StatusCreated, types.M{"message": "Success"})
+	helpers.WriteJSON(w, http.StatusCreated, types.M{
+		"message": "Product has been successfully created",
+		"data": types.ProductCreateRes{
+			ID: productID,
+		},
+	})
+}
+
+func ProductDetail(w http.ResponseWriter, r *http.Request) {
+	productIDStr := chi.URLParam(r, "productID")
+	productID, err := strconv.Atoi(productIDStr)
+	if err != nil {
+		helpers.WriteJSON(w, http.StatusNotFound, types.M{"message": "Invalid URL"})
+		return
+	}
+
+	product, images, err := tx.GetProductByID(r.Context(), int64(productID))
+	if err != nil {
+		helpers.WriteJSON(w, http.StatusNotFound, types.M{"message": "Page not found"})
+		return
+	}
+
+	helpers.WriteJSON(w, http.StatusCreated, types.M{
+		"message": "Success",
+		"data": types.ProductRes{
+			Product: product,
+			Images:  images,
+		},
+	})
 }

@@ -6,6 +6,18 @@ VALUES
 
 -- name: CreateProductImage :execresult
 INSERT INTO
-    products_images (product_id, path)
+    product_images (product_id, path)
 VALUES
     (?, ?);
+
+-- name: GetProductByID :one
+SELECT * FROM
+    products
+WHERE
+    id = ?;
+
+-- name: GetProductImages :many
+SELECT * FROM
+    product_images
+WHERE
+    product_id = ?;

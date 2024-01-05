@@ -18,10 +18,10 @@ VALUES
 `
 
 type CreateProductParams struct {
-	UserID      int64
-	Title       string
-	Description string
-	Price       int32
+	UserID      int64  `json:"user_id"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	Price       int32  `json:"price"`
 }
 
 func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (sql.Result, error) {
@@ -35,16 +35,68 @@ func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (s
 
 const createProductImage = `-- name: CreateProductImage :execresult
 INSERT INTO
-    products_images (product_id, path)
+    product_images (product_id, path)
 VALUES
     (?, ?)
 `
 
 type CreateProductImageParams struct {
-	ProductID int64
-	Path      string
+	ProductID int64  `json:"product_id"`
+	Path      string `json:"path"`
 }
 
 func (q *Queries) CreateProductImage(ctx context.Context, arg CreateProductImageParams) (sql.Result, error) {
 	return q.db.ExecContext(ctx, createProductImage, arg.ProductID, arg.Path)
+}
+
+const getProductByID = `-- name: GetProductByID :one
+SELECT id, user_id, title, description, price, created_at, updated_at FROM
+    products
+WHERE
+    id = ?
+`
+
+func (q *Queries) GetProductByID(ctx context.Context, id int64) (Product, error) {
+	row := q.db.QueryRowContext(ctx, getProductByID, id)
+	var i Product
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.Title,
+		&i.Description,
+		&i.Price,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getProductImages = `-- name: GetProductImages :many
+SELECT id, product_id, path FROM
+    product_images
+WHERE
+    product_id = ?
+`
+
+func (q *Queries) GetProductImages(ctx context.Context, productID int64) ([]ProductImage, error) {
+	rows, err := q.db.QueryContext(ctx, getProductImages, productID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ProductImage
+	for rows.Next() {
+		var i ProductImage
+		if err := rows.Scan(&i.ID, &i.ProductID, &i.Path); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }

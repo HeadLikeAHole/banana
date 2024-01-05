@@ -32,10 +32,10 @@ VALUES
 `
 
 type CreateUserParams struct {
-	Email                string
-	Password             string
-	ActivationToken      sql.NullString
-	ActivationExpiration sql.NullTime
+	Email                string         `json:"email"`
+	Password             string         `json:"password"`
+	ActivationToken      sql.NullString `json:"activation_token"`
+	ActivationExpiration sql.NullTime   `json:"activation_expiration"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (sql.Result, error) {
@@ -169,9 +169,9 @@ WHERE
 `
 
 type SetPasswordResetTokenParams struct {
-	PasswordResetToken      sql.NullString
-	PasswordResetExpiration sql.NullTime
-	Email                   string
+	PasswordResetToken      sql.NullString `json:"password_reset_token"`
+	PasswordResetExpiration sql.NullTime   `json:"password_reset_expiration"`
+	Email                   string         `json:"email"`
 }
 
 func (q *Queries) SetPasswordResetToken(ctx context.Context, arg SetPasswordResetTokenParams) error {
@@ -189,8 +189,8 @@ WHERE
 `
 
 type SetUserPasswordParams struct {
-	Password           string
-	PasswordResetToken sql.NullString
+	Password           string         `json:"password"`
+	PasswordResetToken sql.NullString `json:"password_reset_token"`
 }
 
 func (q *Queries) SetUserPassword(ctx context.Context, arg SetUserPasswordParams) error {

@@ -11,6 +11,7 @@ import { action as signOutAction } from './features/auth/signOut.ts';
 import RequestPasswordReset, { action as requestPasswordResetAction } from './features/auth/RequestPasswordReset.tsx';
 import ResetPassword, { action as resetPasswordAction } from './features/auth/ResetPassword.tsx';
 import CreateProduct, { action as createProductAction } from './features/products/CreateProduct.tsx';
+import ProductDetail, { loader as productDetailLoader } from './features/products/ProductDetail.tsx';
 
 export default function Router() {
   const dispatch = useAppDispatch();
@@ -53,6 +54,11 @@ export default function Router() {
           path: '/products/create',
           element: <AuthRequired><CreateProduct /></AuthRequired>,
           action: createProductAction(dispatch, token)
+        },
+        {
+          path: '/products/:productID',
+          element: <ProductDetail />,
+          loader: productDetailLoader
         }
       ]
     }

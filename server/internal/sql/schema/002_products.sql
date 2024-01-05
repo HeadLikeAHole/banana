@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS products (
             ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS products_images (
+CREATE TABLE IF NOT EXISTS product_images (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     product_id BIGINT NOT NULL,
     path Text NOT NULL,
@@ -24,6 +24,6 @@ CREATE TABLE IF NOT EXISTS products_images (
 );
 
 -- +goose Down
-DROP TABLE products_images;
+DROP TABLE product_images;
 
 DROP TABLE products;

@@ -10,33 +10,33 @@ import (
 )
 
 type Product struct {
-	ID          int64
-	UserID      int64
-	Title       string
-	Description string
-	Price       int32
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	ID          int64     `json:"id"`
+	UserID      int64     `json:"user_id"`
+	Title       string    `json:"title"`
+	Description string    `json:"description"`
+	Price       int32     `json:"price"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
 }
 
-type ProductsImage struct {
-	ID        int64
-	ProductID int64
-	Path      string
+type ProductImage struct {
+	ID        int64  `json:"id"`
+	ProductID int64  `json:"product_id"`
+	Path      string `json:"path"`
 }
 
 type User struct {
-	ID                      int64
-	Email                   string
-	Password                string
-	FirstName               sql.NullString
-	LastName                sql.NullString
-	AccessLevel             int32
-	IsActive                int32
-	ActivationToken         sql.NullString
-	ActivationExpiration    sql.NullTime
-	PasswordResetToken      sql.NullString
-	PasswordResetExpiration sql.NullTime
-	CreatedAt               time.Time
-	UpdatedAt               time.Time
+	ID                      int64          `json:"id"`
+	Email                   string         `json:"email"`
+	Password                string         `json:"password"`
+	FirstName               sql.NullString `json:"first_name"`
+	LastName                sql.NullString `json:"last_name"`
+	AccessLevel             int32          `json:"access_level"`
+	IsActive                int32          `json:"is_active"`
+	ActivationToken         sql.NullString `json:"activation_token"`
+	ActivationExpiration    sql.NullTime   `json:"activation_expiration"`
+	PasswordResetToken      sql.NullString `json:"password_reset_token"`
+	PasswordResetExpiration sql.NullTime   `json:"password_reset_expiration"`
+	CreatedAt               time.Time      `json:"created_at"`
+	UpdatedAt               time.Time      `json:"updated_at"`
 }
