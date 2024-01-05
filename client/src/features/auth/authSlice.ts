@@ -23,6 +23,7 @@ const initialState: UserState = {
   token: localStorage.getItem('token'),
   isAuthenticated: false,
   status: 'idle',
+  message: '',
   user: null
 }
 

@@ -9,6 +9,22 @@ import (
 	"time"
 )
 
+type Product struct {
+	ID          int64
+	UserID      int64
+	Title       string
+	Description string
+	Price       int32
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+}
+
+type ProductsImage struct {
+	ID        int64
+	ProductID int64
+	Path      string
+}
+
 type User struct {
 	ID                      int64
 	Email                   string

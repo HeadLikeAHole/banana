@@ -18,11 +18,12 @@ import Grid from '@mui/material/Grid';
 import Link from '@mui/material/Link';
 import Container from '@mui/material/Container';
 
+import { AppDispatch } from '../../store.ts';
 import { server } from '../../config.ts';
 import { showAlert } from '../alerts/alertsSlice.ts';
 import ValidationError from '../../components/ValidationError.tsx';
 
-export function action(dispatch) {
+export function action(dispatch: AppDispatch) {
   return async function({ request }: ActionFunctionArgs) {
     const formData = await request.formData();
     const data = Object.fromEntries(formData);

@@ -10,10 +10,11 @@ import Link from '@mui/material/Link';
 import { Helmet } from 'react-helmet';
 import { ActionFunctionArgs, Form, Link as RouterLink, redirect, useActionData, useNavigation } from 'react-router-dom';
 
+import { AppDispatch } from '../../store.ts';
 import { server } from '../../config.ts';
 import { showAlert } from '../alerts/alertsSlice.ts';
 
-export function action(dispatch) {
+export function action(dispatch: AppDispatch) {
   return async function({ request }: ActionFunctionArgs) {
     const formData = await request.formData();
     const data = Object.fromEntries(formData);

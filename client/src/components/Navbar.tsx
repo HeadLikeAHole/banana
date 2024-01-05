@@ -18,22 +18,12 @@ import { grey } from '@mui/material/colors';
 import { styled, alpha } from '@mui/material/styles';
 import InputBase from '@mui/material/InputBase';
 import SearchIcon from '@mui/icons-material/Search';
-import { NavLink, Link, redirect } from 'react-router-dom';
+import { NavLink, Link } from 'react-router-dom';
 
 import { useAppSelector } from '../hooks.ts';
-import { selectUser, signOut } from '../features/auth/authSlice.ts';
-import { showAlert } from '../features/alerts/alertsSlice.ts';
+import { selectUser } from '../features/auth/authSlice.ts';
 import Logo from './Logo.tsx';
 import SignOutDialog from './SignOutDialog.tsx';
-
-export function action(dispatch) {
-  return async function() {
-    dispatch(signOut());
-    dispatch(showAlert({ type: 'success', message: 'You have successfully signed out' }));
-
-    return redirect('/');
-  }
-}
 
 export default function Navbar() {
   const [anchorElNav, setAnchorElNav] = useState<null | HTMLElement>(null);

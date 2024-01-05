@@ -17,20 +17,21 @@ import {
   useNavigation
 } from 'react-router-dom';
 
+import { AppDispatch } from '../../store.ts';
 import { server } from '../../config.ts';
 import { showAlert } from '../alerts/alertsSlice.ts';
 import { useAppSelector } from '../../hooks.ts';
 import { selectUser } from '../auth/authSlice.ts';
 
-export function action(dispatch) {
+export function action(dispatch: AppDispatch, token: string) {
   return async function({ request }: ActionFunctionArgs) {
     const formData = await request.formData();
 
-    const response = await fetch(`${server}/api/auth/products`, {
+    const response = await fetch(`${server}/api/products`, {
       method: 'POST',
       body: formData,
       headers: {
-        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
       }
     });
 
@@ -62,6 +63,7 @@ const VisuallyHiddenInput = styled('input')({
   width: 1,
 });
 
+// todo possibly remove it or maybe improve it
 function InputFileUpload() {
   return (
     <Button

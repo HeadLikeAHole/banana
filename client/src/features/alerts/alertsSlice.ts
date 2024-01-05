@@ -1,11 +1,11 @@
 import { createSlice } from '@reduxjs/toolkit';
 
-type AlertType = 'success' | 'warning' | 'error' | 'info';
+type AlertSeverity = 'success' | 'warning' | 'error' | 'info';
 
-interface Alert {
+export interface Alert {
   id: number,
   isOpen: boolean,
-  type: AlertType;
+  severity: AlertSeverity;
   message: string;
 }
 

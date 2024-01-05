@@ -12,6 +12,7 @@ import { Helmet } from 'react-helmet';
 import { Form, Link as RouterLink, redirect, useActionData, useNavigate, useNavigation } from 'react-router-dom';
 import type { ActionFunctionArgs } from 'react-router-dom';
 
+import { AppDispatch } from '../../store.ts';
 import { useAppSelector } from '../../hooks.ts';
 import { server } from '../../config.ts';
 import { showAlert } from '../alerts/alertsSlice.ts';
@@ -23,7 +24,7 @@ interface ActionData {
   confirm_password?: string;
 }
 
-export function action(dispatch) {
+export function action(dispatch: AppDispatch) {
   return async function({ request }: ActionFunctionArgs) {
     const formData = await request.formData();
     const data = Object.fromEntries(formData);

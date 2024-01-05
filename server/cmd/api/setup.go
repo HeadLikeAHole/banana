@@ -8,6 +8,7 @@ import (
 	"github.com/HeadLikeAHole/banana/server/internal/handlers"
 	"github.com/HeadLikeAHole/banana/server/internal/helpers"
 	"github.com/HeadLikeAHole/banana/server/internal/middleware"
+	"github.com/HeadLikeAHole/banana/server/internal/tx"
 	"github.com/HeadLikeAHole/banana/server/internal/types"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
@@ -35,11 +36,12 @@ func setup() error {
 	if dbURL == "" {
 		return errors.New("DB URL was not found in the environment")
 	}
-	conn, err := sql.Open("mysql", dbURL)
+	dbConn, err := sql.Open("mysql", dbURL)
 	if err != nil {
 		return err
 	}
-	app.Queries = db.New(conn)
+	app.DB = dbConn
+	app.Queries = db.New(dbConn)
 
 	app.InfoLog.Println("Starting email dispatcher...")
 	emailServerSettings := types.EmailServerSettings{
@@ -56,6 +58,7 @@ func setup() error {
 	handlers.NewHandlers(app)
 	helpers.NewHelpers(app)
 	middleware.NewMiddleware(app)
+	tx.NewTX(app)
 
 	return nil
 }

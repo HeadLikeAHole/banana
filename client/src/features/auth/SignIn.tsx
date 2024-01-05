@@ -9,13 +9,14 @@ import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
 import { Helmet } from 'react-helmet';
-import { Form, Link as RouterLink, useNavigate } from 'react-router-dom';
+import { Form, Link as RouterLink, useNavigate, useSearchParams } from 'react-router-dom';
 import type { ActionFunctionArgs } from 'react-router-dom';
 
+import { AppDispatch } from '../../store.ts';
 import { useAppSelector } from '../../hooks.ts';
 import { selectUser, signIn } from './authSlice.ts';
 
-export function action(dispatch) {
+export function action(dispatch: AppDispatch) {
   return async function({ request }: ActionFunctionArgs) {
     const formData = await request.formData();
     const data = Object.fromEntries(formData);
@@ -28,16 +29,17 @@ export function action(dispatch) {
 
 export default function SignIn() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { isAuthenticated, status, message } = useAppSelector(selectUser);
 
   let error;
-  if (status === "error") {
+  if (status === 'error') {
     error = message;
   }
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/');
+      navigate(searchParams.get('path') || '/');
     }
   }, [isAuthenticated])
 

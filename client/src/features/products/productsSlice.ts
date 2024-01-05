@@ -1,7 +1,6 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 
 import { server } from '../../config.ts';
-import { authHeaders } from '../../helpers.ts';
 import { showAlert } from '../alerts/alertsSlice.ts';
 
 export interface Product {

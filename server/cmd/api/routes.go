@@ -62,7 +62,7 @@ func apiRouter() http.Handler {
 	})
 
 	r.Route("/products", func(r chi.Router) {
-		r.Post("/", handlers.CreateProduct)
+		r.With(middleware.Auth).Post("/", handlers.CreateProduct)
 	})
 
 	return r
