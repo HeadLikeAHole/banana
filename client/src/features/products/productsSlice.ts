@@ -1,7 +1,4 @@
-import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
-
-import { server } from '../../config.ts';
-import { showAlert } from '../alerts/alertsSlice.ts';
+import { createSlice } from '@reduxjs/toolkit';
 
 export interface Product {
   id: number;

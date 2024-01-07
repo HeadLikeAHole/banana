@@ -7,6 +7,12 @@ import Slide from '@mui/material/Slide';
 import { TransitionProps } from '@mui/material/transitions';
 import { Form } from 'react-router-dom';
 
+interface SignOutDialogProps {
+  open: boolean,
+  setOpen: React.Dispatch<React.SetStateAction<boolean>>,
+  closeUserMenu: () => void
+}
+
 const Transition = React.forwardRef(function Transition(
   props: TransitionProps & {
     children: React.ReactElement<any, any>;
@@ -16,7 +22,7 @@ const Transition = React.forwardRef(function Transition(
   return <Slide direction="down" ref={ref} {...props} />;
 });
 
-export default function SignOutDialog({ open, setOpen, closeUserMenu }) {
+export default function SignOutDialog({ open, setOpen, closeUserMenu }: SignOutDialogProps) {
   const handleClose = () => {
     setOpen(false);
     closeUserMenu();
@@ -34,7 +40,7 @@ export default function SignOutDialog({ open, setOpen, closeUserMenu }) {
       <DialogTitle>Are you sure you want to sign out?</DialogTitle>
       <DialogActions>
         <Button variant="outlined" color="primary" onClick={handleClose}>No</Button>
-        <Form method="post" action="/sign-out">
+        <Form method="post" action="sign-out">
           <Button type="submit" variant="outlined" onClick={handleClose}>Yes</Button>
         </Form>
       </DialogActions>

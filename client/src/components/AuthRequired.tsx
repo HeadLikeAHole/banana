@@ -21,5 +21,3 @@ export default function AuthRequired({ children }: Props) {
 
   return children;
 };
-
-// todo fix navigate bug

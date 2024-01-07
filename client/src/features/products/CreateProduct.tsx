@@ -20,10 +20,14 @@ import {
 import { AppDispatch } from '../../store.ts';
 import { server } from '../../config.ts';
 import { showAlert } from '../alerts/alertsSlice.ts';
-import { useAppSelector } from '../../hooks.ts';
-import { selectUser } from '../auth/authSlice.ts';
 
-export function action(dispatch: AppDispatch, token: string) {
+interface ActionData {
+  title?: string;
+  description?: string;
+  price?: string;
+}
+
+export function action(dispatch: AppDispatch, token: string | null) {
   return async function({ request }: ActionFunctionArgs) {
     const formData = await request.formData();
 
@@ -79,9 +83,8 @@ function InputFileUpload() {
 }
 
 export default function CreateProduct() {
-  const token = useAppSelector(selectUser);
   const { state } = useNavigation();
-  const errors = useActionData();
+  const errors = useActionData() as ActionData;
 
   return (
     <Container component="main" maxWidth="xs">
@@ -139,7 +142,6 @@ export default function CreateProduct() {
             }}
           />
           <InputFileUpload />
-          <input type="hidden" name="token" value={token ? token : ""} />
           <Button
             type="submit"
             fullWidth

@@ -15,7 +15,7 @@ import ProductDetail, { loader as productDetailLoader } from './features/product
 
 export default function Router() {
   const dispatch = useAppDispatch();
-  const token = useAppSelector(selectUserToken);
+  // const token = useAppSelector(selectUserToken);
 
   const router = createBrowserRouter([
     {
@@ -23,42 +23,46 @@ export default function Router() {
       element: <App />,
       children: [
         {
-          path: '/sign-up',
+          path: 'sign-up',
           element: <SignUp />,
           action: signUpAction(dispatch)
         },
         {
-          path: '/activate-account',
+          path: 'activate-account',
           element: <AccountActivation />
         },
         {
-          path: '/sign-in',
+          path: 'sign-in',
           element: <SignIn />,
           action: signInAction(dispatch)
         },
         {
-          path: '/sign-out',
+          path: 'sign-out',
           action: signOutAction(dispatch)
         },
         {
-          path: '/request-password-reset',
+          path: 'request-password-reset',
           element: <RequestPasswordReset />,
           action: requestPasswordResetAction(dispatch)
         },
         {
-          path: '/reset-password',
+          path: 'reset-password',
           element: <ResetPassword />,
           action: resetPasswordAction(dispatch)
         },
         {
-          path: '/products/create',
+          path: 'products/create',
           element: <AuthRequired><CreateProduct /></AuthRequired>,
-          action: createProductAction(dispatch, token)
+          // action: createProductAction(dispatch, token)
         },
         {
-          path: '/products/:productID',
+          path: 'products/:productID',
           element: <ProductDetail />,
           loader: productDetailLoader
+        },
+        {
+          path: 'test',
+          element: <Test />,
         }
       ]
     }
@@ -67,4 +71,10 @@ export default function Router() {
   return (
     <RouterProvider router={router} />
   );
+}
+
+function Test() {
+  return (
+    <div>test</div>
+  )
 }

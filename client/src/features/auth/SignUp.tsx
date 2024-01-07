@@ -57,7 +57,7 @@ export default function SignUp() {
   const navigate = useNavigate();
   const { state } = useNavigation();
   const { isAuthenticated } = useAppSelector(selectUser);
-  const errors = useActionData();
+  const errors = useActionData() as ActionData;
 
   useEffect(() => {
     if (isAuthenticated) {

@@ -1,5 +1,7 @@
 import { createSlice } from '@reduxjs/toolkit';
 
+import { RootState } from '../../store.ts';
+
 type AlertSeverity = 'success' | 'warning' | 'error' | 'info';
 
 export interface Alert {
@@ -22,10 +24,10 @@ const alertsSlice = createSlice({
   initialState,
   reducers: {
     showAlert(state, action) {
-      const alert = {
+      const alert: Alert = {
         id: Math.random(),
         isOpen: true,
-        type: action.payload.type,
+        severity: action.payload.type,
         message: action.payload.message
       };
       state.data.push(alert);
@@ -40,7 +42,7 @@ const alertsSlice = createSlice({
 });
 
 // todo memoize selector
-export const selectAlerts = state => state.alerts.data;
+export const selectAlerts = (state: RootState) => state.alerts.data;
 
 export const { showAlert, closeAlert } = alertsSlice.actions;
 

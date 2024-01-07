@@ -9,6 +9,6 @@ export function action(dispatch: AppDispatch) {
     dispatch(signOut());
     dispatch(showAlert({ type: 'success', message: 'You have successfully signed out' }));
 
-    return redirect('/');
+    return redirect('/test');
   }
 }

@@ -1,8 +1,10 @@
-import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
+import { createAppAsyncThunk } from '../../helpers.ts';
 import { server } from '../../config.ts';
 import { authHeaders } from '../../helpers.ts';
 import { showAlert } from '../alerts/alertsSlice.ts';
+import { RootState } from '../../store.ts';
 
 export interface User {
   id: number;
@@ -15,8 +17,12 @@ export interface UserState {
   token: string | null;
   isAuthenticated: boolean;
   status: 'idle' | 'loading' | 'success' | 'error';
-  message: string | undefined;
+  message: string;
   user: User | null;
+}
+
+export interface SignInData {
+  [k: string]: FormDataEntryValue;
 }
 
 const initialState: UserState = {
@@ -27,9 +33,9 @@ const initialState: UserState = {
   user: null
 }
 
-export const signIn = createAsyncThunk(
+export const signIn = createAppAsyncThunk(
   'auth/signIn',
-  async (data, { dispatch, rejectWithValue }) => {
+  async (data: SignInData, { dispatch, rejectWithValue }) => {
     const response = await fetch(`${server}/api/auth/sign-in`, {
       method: 'POST',
       body: JSON.stringify(data),
@@ -51,7 +57,7 @@ export const signIn = createAsyncThunk(
   }
 );
 
-export const fetchUser = createAsyncThunk(
+export const fetchUser = createAppAsyncThunk(
   'auth/fetchUser',
   async (_, { getState }) => {
     const response = await fetch(`${server}/api/auth/user`, {
@@ -68,7 +74,7 @@ export const fetchUser = createAsyncThunk(
   }
 );
 
-function isPendingAction(action) {
+function isPendingAction(action: PayloadAction) {
   return action.type.endsWith('/pending');
 }
 
@@ -88,17 +94,19 @@ const authSlice = createSlice({
         state.token = action.payload.data.token;
         state.isAuthenticated = true;
         state.status = 'success';
-        state.message = action.payload.message
+        state.message = action.payload.message;
         state.user = action.payload.data.user;
       })
       .addCase(signIn.rejected, (state, action) => {
         state.status = 'error';
-        state.message = action.payload.message;
+        if (action.payload) {
+          state.message = action.payload.message;
+        }
       })
       .addCase(fetchUser.fulfilled, (state, action) => {
         state.isAuthenticated = true;
         state.status = 'success';
-        state.message = action.payload.message
+        state.message = action.payload.message;
         state.user = action.payload.data;
       })
       .addCase(fetchUser.rejected, (state) => {
@@ -110,8 +118,8 @@ const authSlice = createSlice({
   }
 });
 
-export const selectUser = state => state.auth;
-export const selectUserToken = state => state.auth.token;
+export const selectUser = (state: RootState) => state.auth;
+export const selectUserToken = (state: RootState) => state.auth.token;
 
 export const { signOut} = authSlice.actions;
 
