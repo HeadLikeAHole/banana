@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
@@ -6,85 +7,52 @@ import Grid from '@mui/material/Grid';
 import Link from '@mui/material/Link';
 import Container from '@mui/material/Container';
 import InputAdornment from '@mui/material/InputAdornment';
-import { styled } from '@mui/material/styles';
-import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { Helmet } from 'react-helmet';
-import {
-  ActionFunctionArgs,
-  Form,
-  Link as RouterLink, redirect,
-  useActionData,
-  useNavigation
-} from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { useForm, SubmitHandler } from 'react-hook-form';
 
-import { AppDispatch } from '../../store.ts';
-import { server } from '../../config.ts';
 import { showAlert } from '../alerts/alertsSlice.ts';
-
-interface ActionData {
-  title?: string;
-  description?: string;
-  price?: string;
-}
-
-export function action(dispatch: AppDispatch, token: string | null) {
-  return async function({ request }: ActionFunctionArgs) {
-    const formData = await request.formData();
-
-    const response = await fetch(`${server}/api/products`, {
-      method: 'POST',
-      body: formData,
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
-
-    if (!response.ok) {
-      const responseData = await response.json();
-      if (responseData.errors) {
-        return responseData.errors
-      }
-      throw new Error(responseData.message)
-    }
-
-    const responseData = await response.json();
-
-    dispatch(showAlert({ type: 'success', message: responseData.message }));
-
-    return redirect('/');
-  }
-}
-
-const VisuallyHiddenInput = styled('input')({
-  clip: 'rect(0 0 0 0)',
-  clipPath: 'inset(50%)',
-  height: 1,
-  overflow: 'hidden',
-  position: 'absolute',
-  bottom: 0,
-  left: 0,
-  whiteSpace: 'nowrap',
-  width: 1,
-});
-
-// todo possibly remove it or maybe improve it
-function InputFileUpload() {
-  return (
-    <Button
-      component="label"
-      variant="contained"
-      startIcon={<CloudUploadIcon />}
-      sx={{ mt: 2 }}
-    >
-      Upload files
-      <VisuallyHiddenInput type="file" name="images" multiple />
-    </Button>
-  );
-}
+import { CreateProductFormData, useCreateProductMutation } from './productsSlice.ts';
+import ValidationError from '../../components/ValidationError.tsx';
+import { useAppDispatch } from '../../hooks.ts';
+import { isFetchBaseQueryError } from '../../helpers.ts';
 
 export default function CreateProduct() {
-  const { state } = useNavigation();
-  const errors = useActionData() as ActionData;
+  const {
+    register,
+    handleSubmit,
+    setError,
+    formState: { errors, isSubmitting }
+  } = useForm<CreateProductFormData>();
+
+  const [createProduct, { data, error, isSuccess, isError }] = useCreateProductMutation();
+
+  const dispatch = useAppDispatch();
+
+  const navigate = useNavigate();
+
+  const onSubmit: SubmitHandler<CreateProductFormData> = formData => createProduct(formData);
+
+  if (isSuccess) {
+    dispatch(showAlert({ type: 'success', message: data?.message }));
+    navigate('/');
+  }
+
+  useEffect(() => {
+    if (isError) {
+      if (
+        isFetchBaseQueryError(error) &&
+        typeof error.data === 'object' && error.data != null && 'errors' in error.data &&
+        typeof error.data.errors === 'object' && error.data.errors != null
+      ) {
+        for (const key in error.data.errors) {
+          if (key === 'title' || key === 'description' || key === 'price' || key === 'images') {
+            setError(key, { message: error.data.errors[key as keyof typeof error.data.errors] });
+          }
+        }
+      }
+    }
+  }, [isError]);
 
   return (
     <Container component="main" maxWidth="xs">
@@ -102,52 +70,59 @@ export default function CreateProduct() {
         <Typography component="h1" variant="h5" sx={{ mb: 2 }}>
           Create Product
         </Typography>
-        <Box component={Form} method="post" encType="multipart/form-data">
+        <Box component="form" onSubmit={handleSubmit(onSubmit)} encType="multipart/form-data">
           <TextField
-            error={!!errors?.title}
-            helperText={errors?.title && errors.title}
+            {...register('title', { required: 'Title is required' })}
+            error={!!errors.title}
+            helperText={errors.title && errors.title.message}
             margin="normal"
-            required
             fullWidth
             id="title"
-            name="title"
             label="Title"
             multiline
             rows="3"
             autoFocus
           />
           <TextField
-            error={!!errors?.description}
-            helperText={errors?.description && errors.description}
+            {...register('description', { required: 'Description is required' })}
+            error={!!errors.description}
+            helperText={errors.description && errors.description.message}
             margin="normal"
-            required
             fullWidth
             id="description"
-            name="description"
             label="Description"
             multiline
             rows="5"
           />
           <TextField
-            error={!!errors?.price}
-            helperText={errors?.price && errors.price}
+            {...register('price', {
+              required: 'Price is required',
+              validate: value => !isNaN(Number(value)) || 'Enter a valid number'
+            })}
+            error={!!errors.price}
+            helperText={errors.price && errors.price.message}
             margin="normal"
-            required
             fullWidth
             id="price"
-            name="price"
             label="Price"
             InputProps={{
               startAdornment: <InputAdornment position="start">$</InputAdornment>
             }}
           />
-          <InputFileUpload />
+          <Box sx={{ mt: 1 }}>
+            <input
+              {...register('images', { required: 'Images are required' })}
+              type="file"
+              multiple
+            />
+          </Box>
+          {errors.images?.message && <ValidationError error={errors.images.message} />}
           <Button
             type="submit"
             fullWidth
             variant="contained"
             sx={{ mt: 3, mb: 2 }}
-            disabled={state === 'submitting'}
+            disabled={isSubmitting}
           >
             OK
           </Button>

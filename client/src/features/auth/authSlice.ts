@@ -1,28 +1,101 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice } from '@reduxjs/toolkit';
 
-import { createAppAsyncThunk } from '../../helpers.ts';
-import { server } from '../../config.ts';
-import { authHeaders } from '../../helpers.ts';
-import { showAlert } from '../alerts/alertsSlice.ts';
 import { RootState } from '../../store.ts';
+import { apiSlice } from '../api/apiSlice.ts';
+import { isFetchBaseQueryError } from '../../helpers.ts';
 
-export interface User {
+export interface SignUpFormData {
+  email: string;
+  password: string;
+  confirm_password: string;
+}
+
+interface MessageResult {
+  message: string;
+}
+
+export interface SignInFormData {
+  email: string;
+  password: string;
+}
+
+interface SignInResult {
+  message: string;
+  data: {
+    token: string;
+    user: User;
+  };
+}
+
+interface User {
   id: number;
   email: string;
   first_name: string;
   last_name: string;
 }
 
-export interface UserState {
+interface GetUserResult {
+  message: string;
+  data: User;
+}
+
+export interface RequestPasswordResetFormData {
+  email: string;
+}
+
+export interface ResetPasswordFormData {
+  token: string;
+  password: string;
+  confirm_password: string;
+}
+
+export const authAPISlice = apiSlice.injectEndpoints({
+  endpoints: builder => ({
+    signUp: builder.mutation<MessageResult, SignUpFormData>({
+      query: body => ({
+        url: '/api/auth/sign-up',
+        method: 'POST',
+        body
+      })
+    }),
+    activateAccount: builder.query<MessageResult, string | null>({
+      query: token => `/api/auth/activate-account?token=${token}`
+    }),
+    signIn: builder.mutation<SignInResult, SignInFormData>({
+      query: body => ({
+        url: '/api/auth/sign-in',
+        method: 'POST',
+        body
+      }),
+      invalidatesTags: ['User']
+    }),
+    getUser: builder.query<GetUserResult, void>({
+      query: () => '/api/auth/user',
+      providesTags: ['User']
+    }),
+    requestPasswordReset: builder.mutation<MessageResult, RequestPasswordResetFormData>({
+      query: body => ({
+        url: '/api/auth/request-password-reset',
+        method: 'POST',
+        body
+      })
+    }),
+    resetPassword: builder.mutation<MessageResult, ResetPasswordFormData>({
+      query: body => ({
+        url: '/api/auth/reset-password',
+        method: 'POST',
+        body
+      })
+    })
+  })
+});
+
+interface UserState {
   token: string | null;
   isAuthenticated: boolean;
   status: 'idle' | 'loading' | 'success' | 'error';
   message: string;
   user: User | null;
-}
-
-export interface SignInData {
-  [k: string]: FormDataEntryValue;
 }
 
 const initialState: UserState = {
@@ -31,51 +104,6 @@ const initialState: UserState = {
   status: 'idle',
   message: '',
   user: null
-}
-
-export const signIn = createAppAsyncThunk(
-  'auth/signIn',
-  async (data: SignInData, { dispatch, rejectWithValue }) => {
-    const response = await fetch(`${server}/api/auth/sign-in`, {
-      method: 'POST',
-      body: JSON.stringify(data),
-      headers: {
-        'Content-Type': 'application/json',
-      }
-    });
-
-    if (!response.ok) {
-      const responseData = await response.json();
-      return rejectWithValue(responseData)
-    }
-
-    const responseData = await response.json();
-
-    dispatch(showAlert({ type: 'success', message: responseData.message }));
-
-    return responseData;
-  }
-);
-
-export const fetchUser = createAppAsyncThunk(
-  'auth/fetchUser',
-  async (_, { getState }) => {
-    const response = await fetch(`${server}/api/auth/user`, {
-      method: 'POST',
-      headers: authHeaders(getState)
-    });
-
-    if (!response.ok) {
-      const responseData = await response.json();
-      throw new Error(responseData.message)
-    }
-
-    return await response.json();
-  }
-);
-
-function isPendingAction(action: PayloadAction) {
-  return action.type.endsWith('/pending');
 }
 
 const authSlice = createSlice({
@@ -87,39 +115,60 @@ const authSlice = createSlice({
       return initialState;
     }
   },
-  extraReducers(builder) {
+  extraReducers: (builder) => {
     builder
-      .addCase(signIn.fulfilled, (state, action) => {
-        localStorage.setItem('token', action.payload.data.token);
-        state.token = action.payload.data.token;
-        state.isAuthenticated = true;
-        state.status = 'success';
-        state.message = action.payload.message;
-        state.user = action.payload.data.user;
-      })
-      .addCase(signIn.rejected, (state, action) => {
-        state.status = 'error';
-        if (action.payload) {
-          state.message = action.payload.message;
+      .addMatcher(
+        authAPISlice.endpoints.signIn.matchFulfilled,
+        (state, { payload }) => {
+          localStorage.setItem('token', payload.data.token);
+          state.token = payload.data.token;
+          state.isAuthenticated = true;
+          state.status = 'success';
+          state.message = payload.message;
+          state.user = payload.data.user;
         }
-      })
-      .addCase(fetchUser.fulfilled, (state, action) => {
-        state.isAuthenticated = true;
-        state.status = 'success';
-        state.message = action.payload.message;
-        state.user = action.payload.data;
-      })
-      .addCase(fetchUser.rejected, (state) => {
-        state.status = 'error';
-      })
-      .addMatcher(isPendingAction, (state) => {
-        state.status = 'loading';
-      })
+      )
+      .addMatcher(
+        authAPISlice.endpoints.getUser.matchPending,
+        (state) => {
+          state.status = 'loading';
+        }
+      )
+      .addMatcher(
+        authAPISlice.endpoints.getUser.matchFulfilled,
+        (state, { payload }) => {
+          state.isAuthenticated = true;
+          state.status = 'success';
+          state.message = payload.message;
+          state.user = payload.data;
+        }
+      )
+      .addMatcher(
+        authAPISlice.endpoints.getUser.matchRejected,
+        (state, { payload }) => {
+          state.isAuthenticated = false;
+          state.status = 'error';
+          if (
+            isFetchBaseQueryError(payload) &&
+            typeof payload.data === 'object' && payload.data != null && 'message' in payload.data &&
+            typeof payload.data.message === 'string'
+          ) {
+              state.message = payload.data.message;
+          }
+        }
+      )
   }
 });
 
+export const {
+  useSignUpMutation,
+  useActivateAccountQuery,
+  useSignInMutation,
+  useRequestPasswordResetMutation,
+  useResetPasswordMutation
+} = authAPISlice;
+
 export const selectUser = (state: RootState) => state.auth;
-export const selectUserToken = (state: RootState) => state.auth.token;
 
 export const { signOut} = authSlice.actions;
 

@@ -1,4 +1,18 @@
-import { createSlice } from '@reduxjs/toolkit';
+import { apiSlice } from '../api/apiSlice.ts';
+
+export interface CreateProductFormData {
+  title: string;
+  description: string;
+  price: number;
+  images: FileList;
+}
+
+export interface CreateProductResult {
+  message: string;
+  data: {
+    id: number;
+  };
+}
 
 export interface Product {
   id: number;
@@ -10,24 +24,28 @@ export interface Product {
   updatedAt: Date
 }
 
-export interface ProductListState {
-  status: 'idle' | 'loading' | 'success' | 'error';
-  message: string;
-  data: Product[];
-}
+export const productsAPISlice = apiSlice.injectEndpoints({
+  endpoints: builder => ({
+    createProduct: builder.mutation<CreateProductResult, CreateProductFormData>({
+      query: body => {
+        const formData = new FormData();
+        formData.append('title', body.title);
+        formData.append('description', body.description);
+        formData.append('price', body.price + '');  // "+ ''" number converts to string
+        for (const file of body.images) {
+          formData.append('images', file);
+        }
 
-const initialState: ProductListState = {
-  status: 'idle',
-  message: '',
-  data: []
-}
-
-const productsSlice = createSlice({
-  name: 'products',
-  initialState,
-  reducers: {
-
-  }
+        return {
+          url: '/api/products',
+          method: 'POST',
+          body: formData,
+        }
+      }
+    })
+  })
 });
 
-export default productsSlice.reducer;
+export const {
+  useCreateProductMutation
+} = productsAPISlice;

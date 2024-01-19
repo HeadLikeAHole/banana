@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import Container from '@mui/material/Container';
 import Box from '@mui/material/Box';
 import Avatar from '@mui/material/Avatar';
@@ -8,43 +9,46 @@ import Button from '@mui/material/Button';
 import Grid from '@mui/material/Grid';
 import Link from '@mui/material/Link';
 import { Helmet } from 'react-helmet';
-import { ActionFunctionArgs, Form, Link as RouterLink, redirect, useActionData, useNavigation } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { useForm, SubmitHandler } from 'react-hook-form';
 
-import { AppDispatch } from '../../store.ts';
-import { server } from '../../config.ts';
+import { RequestPasswordResetFormData, useRequestPasswordResetMutation } from './authSlice.ts';
 import { showAlert } from '../alerts/alertsSlice.ts';
-
-export function action(dispatch: AppDispatch) {
-  return async function({ request }: ActionFunctionArgs) {
-    const formData = await request.formData();
-    const data = Object.fromEntries(formData);
-
-    const response = await fetch(`${server}/api/auth/request-password-reset`, {
-      method: 'POST',
-      body: JSON.stringify(data),
-      headers: {
-        'Content-Type': 'application/json',
-      }
-    });
-
-    if (!response.ok) {
-      const responseData = await response.json();
-      if (responseData.message) {
-        return responseData.message
-      }
-    }
-
-    const responseData = await response.json();
-
-    dispatch(showAlert({ type: 'success', message: responseData.message }));
-
-    return redirect('/');
-  }
-}
+import { useAppDispatch } from '../../hooks.ts';
+import { isFetchBaseQueryError } from '../../helpers.ts';
 
 export default function RequestPasswordReset() {
-  const { state } = useNavigation();
-  const error = useActionData();
+  const {
+    register,
+    handleSubmit,
+    setError,
+    formState: { errors, isSubmitting }
+  } = useForm<RequestPasswordResetFormData>();
+
+  const [requestPasswordReset, { data, error, isSuccess, isError }] = useRequestPasswordResetMutation();
+
+  const dispatch = useAppDispatch();
+
+  const navigate = useNavigate();
+
+  const onSubmit: SubmitHandler<RequestPasswordResetFormData> = formData => requestPasswordReset(formData);
+
+  if (isSuccess) {
+    dispatch(showAlert({ type: 'success', message: data?.message }));
+    navigate('/');
+  }
+
+  useEffect(() => {
+    if (isError) {
+      if (
+        isFetchBaseQueryError(error) &&
+        typeof error.data === 'object' && error.data != null && 'message' in error.data &&
+        typeof error.data.message === 'string'
+      ) {
+        setError('email', { message: error.data.message });
+      }
+    }
+  }, [isError]);
 
   return (
     <Container component="main" maxWidth="xs">
@@ -69,16 +73,21 @@ export default function RequestPasswordReset() {
           Enter your email and we'll send you instructions how to set a new password
         </Typography>
         {/* form with one text field doesn't take up 100% width of the parent container for some reason */}
-        <Box component={Form} method="post" sx={{ width: 1 }}>
+        <Box component="form" onSubmit={handleSubmit(onSubmit)} sx={{ width: 1 }}>
           <TextField
-            error={!!error}
-            helperText={error && error}
+            {...register('email', {
+              required: 'Email is required',
+              pattern: {
+                value: /\S+@\S+\.\S+/,
+                message: "Enter a valid email",
+              }
+            })}
+            error={!!errors.email}
+            helperText={errors.email && errors.email.message}
             margin="normal"
-            required
             fullWidth
             id="email"
             label="Email Address"
-            name="email"
             autoComplete="email"
             autoFocus
           />
@@ -87,7 +96,7 @@ export default function RequestPasswordReset() {
             fullWidth
             variant="contained"
             sx={{ mt: 3, mb: 2 }}
-            disabled={state === 'submitting'}
+            disabled={isSubmitting}
           >
             Send
           </Button>

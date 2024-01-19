@@ -31,6 +31,9 @@ func CreateProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	images := r.MultipartForm.File["images"]
+	data.Images = images
+
 	err = validate.Struct(data)
 	if err != nil {
 		errs := helpers.GetValidationErrors(err)
@@ -46,7 +49,7 @@ func CreateProduct(w http.ResponseWriter, r *http.Request) {
 		Title:       data.Title,
 		Description: data.Description,
 		Price:       int32(data.Price),
-	}, r.MultipartForm.File["images"])
+	}, images)
 	if err != nil {
 		helpers.WriteJSON(w, http.StatusInternalServerError, types.M{"message": "Server error"})
 		app.ErrorLog.Println(err)

@@ -56,7 +56,7 @@ func apiRouter() http.Handler {
 		r.Post("/sign-up", handlers.SignUp)
 		r.Get("/activate-account", handlers.ActivateAccount)
 		r.Post("/sign-in", handlers.SignIn)
-		r.With(middleware.Auth).Post("/user", handlers.User)
+		r.With(middleware.Auth).Get("/user", handlers.User)
 		r.Post("/request-password-reset", handlers.RequestPasswordReset)
 		r.Post("/reset-password", handlers.ResetPassword)
 	})

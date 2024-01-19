@@ -1,13 +1,3 @@
-import {
-  ActionFunctionArgs,
-  Form,
-  Link as RouterLink,
-  redirect,
-  useActionData,
-  useNavigation,
-  useSearchParams
-} from 'react-router-dom';
-import { Helmet } from 'react-helmet';
 import Box from '@mui/material/Box';
 import Avatar from '@mui/material/Avatar';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
@@ -17,49 +7,51 @@ import Button from '@mui/material/Button';
 import Grid from '@mui/material/Grid';
 import Link from '@mui/material/Link';
 import Container from '@mui/material/Container';
+import { Helmet } from 'react-helmet';
+import { Link as RouterLink, useNavigate, useSearchParams } from 'react-router-dom';
+import { useForm, SubmitHandler } from 'react-hook-form';
 
-import { AppDispatch } from '../../store.ts';
-import { server } from '../../config.ts';
+import { ResetPasswordFormData, useResetPasswordMutation } from './authSlice.ts';
 import { showAlert } from '../alerts/alertsSlice.ts';
+import { useAppDispatch } from '../../hooks.ts';
+import { isFetchBaseQueryError } from '../../helpers.ts';
 import ValidationError from '../../components/ValidationError.tsx';
 
-export function action(dispatch: AppDispatch) {
-  return async function({ request }: ActionFunctionArgs) {
-    const formData = await request.formData();
-    const data = Object.fromEntries(formData);
-
-    const response = await fetch(`${server}/api/auth/reset-password`, {
-      method: 'POST',
-      body: JSON.stringify(data),
-      headers: {
-        'Content-Type': 'application/json',
-      }
-    });
-
-    if (!response.ok) {
-      const responseData = await response.json();
-      if (responseData.errors) {
-        return responseData.errors
-      }
-      if (response.status === 400) {
-        return responseData
-      }
-      throw new Error(responseData.message)
-    }
-
-    const responseData = await response.json();
-
-    dispatch(showAlert({ type: 'success', message: responseData.message }));
-
-    return redirect('/sign-in');
-  }
-}
-
 export default function ResetPassword() {
-  const { state } = useNavigation();
-  const errors = useActionData();
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token');
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    getValues
+  } = useForm<ResetPasswordFormData>();
+
+  const [resetPassword, { data, error, isSuccess, isError }] = useResetPasswordMutation();
+
+  const dispatch = useAppDispatch();
+
+  const navigate = useNavigate();
+
+  const onSubmit: SubmitHandler<ResetPasswordFormData> = formData => resetPassword(formData);
+
+  if (isSuccess) {
+    dispatch(showAlert({ type: 'success', message: data?.message }));
+    navigate('/sign-in');
+  }
+
+  let errorMessage: string | undefined;
+
+  if (isError) {
+    if (
+      isFetchBaseQueryError(error) &&
+      typeof error.data === 'object' && error.data != null && 'message' in error.data &&
+      typeof error.data.message === 'string'
+    ) {
+      errorMessage = error.data.message;
+    }
+  }
 
   return (
     <Container component="main" maxWidth="xs">
@@ -80,39 +72,52 @@ export default function ResetPassword() {
         <Typography component="h1" variant="h5">
           Reset Password
         </Typography>
-        <Box component={Form} method="post">
+        <Box component="form" onSubmit={handleSubmit(onSubmit)}>
           <TextField
-            error={!!errors?.password}
-            helperText={errors?.password && errors.password}
+            {...register('password', {
+              required: 'Password is required',
+              minLength: {
+                value: 2,
+                message: 'Password must contain at least 2 characters'
+              }
+            })}
+            error={!!errors.password}
+            helperText={errors.password && errors.password.message}
             margin="normal"
-            required
             fullWidth
-            name="password"
-            label="New Password"
+            label="Password"
             type="password"
             id="password"
             autoComplete="current-password"
           />
           <TextField
-            error={!!errors?.confirm_password}
-            helperText={errors?.confirm_password && errors.confirm_password}
+            {...register('confirm_password', {
+              required: 'Password confirmation is required',
+              minLength: {
+                value: 2,
+                message: 'Password must contain at least 2 characters'
+              },
+              validate: value => {
+                return value === getValues('password') || 'Passwords must match'
+              }
+            })}
+            error={!!errors.confirm_password}
+            helperText={errors.confirm_password && errors.confirm_password.message}
             margin="normal"
-            required
             fullWidth
-            name="confirm_password"
-            label="Confirm New Password"
+            label="Confirm Password"
             type="password"
             id="confirm_password"
             autoComplete="current-password"
           />
-          {errors?.message && <ValidationError error={errors.message} />}
-          <input type="hidden" name="token" value={token ? token : ""} />
+          {errorMessage && <ValidationError error={errorMessage} />}
+          <input {...register("token", { value: token ? token : "" })} type="hidden" />
           <Button
             type="submit"
             fullWidth
             variant="contained"
             sx={{ mt: 3, mb: 2 }}
-            disabled={state === 'submitting'}
+            disabled={isSubmitting}
           >
             Reset
           </Button>

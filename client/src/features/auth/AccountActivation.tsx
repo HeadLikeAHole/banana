@@ -1,42 +1,32 @@
-import { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import Skeleton from '@mui/material/Skeleton';
 import Alert from '@mui/material/Alert';
 import AlertTitle from '@mui/material/AlertTitle';
+import { useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 
-import { server } from '../../config.ts';
+import { useActivateAccountQuery } from './authSlice.ts';
+import { capitalize, isFetchBaseQueryError } from '../../helpers.ts';
 
 export default function AccountActivation() {
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token');
-  const [status, setStatus] = useState('success');
-  const [message, setMessage] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
 
-  const severity = status === 'success' ? 'success' : 'error';
-  const title = status === 'success' ? 'Success' : 'Error';
+  const { data, error, isLoading, isSuccess, isError } = useActivateAccountQuery(token);
 
-  useEffect(() => {
-    async function activateAccount() {
-      // todo possibly refactor to try/catch
-      const response = await fetch(`${server}/api/auth/activate-account?token=${token}`, {
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      });
+  const severity = isSuccess ? 'success' : 'error';
 
-      if (!response.ok) {
-        setStatus('error');
-      }
-      const data = await response.json();
-      setMessage(data?.message);
-      setIsLoading(false);
+  let errorMessage: string | undefined;
+
+  if (isError) {
+    if (
+      isFetchBaseQueryError(error) &&
+      typeof error.data === 'object' && error.data != null && 'message' in error.data &&
+      typeof error.data.message === 'string'
+    ) {
+      errorMessage = error.data.message;
     }
-
-    activateAccount();
-  }, []);
+  }
 
   return (
     <>
@@ -48,8 +38,8 @@ export default function AccountActivation() {
           <Skeleton variant="rectangular" sx={{ height: 1 }} />
         ) : (
           <Alert severity={severity}>
-            <AlertTitle>{title}</AlertTitle>
-            {message}
+            <AlertTitle>{capitalize(severity)}</AlertTitle>
+            {isSuccess ? data?.message : errorMessage}
           </Alert>
         )}
       </Box>

@@ -20,8 +20,8 @@ import InputBase from '@mui/material/InputBase';
 import SearchIcon from '@mui/icons-material/Search';
 import { NavLink, Link } from 'react-router-dom';
 
-import { useAppSelector } from '../hooks.ts';
 import { selectUser } from '../features/auth/authSlice.ts';
+import { useAppSelector } from '../hooks.ts';
 import Logo from './Logo.tsx';
 import SignOutDialog from './SignOutDialog.tsx';
 
@@ -46,7 +46,7 @@ export default function Navbar() {
 
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  const userState = useAppSelector(selectUser);
+  const { isAuthenticated, status } = useAppSelector(selectUser);
 
   const authenticatedLinks = (
     <>
@@ -229,10 +229,10 @@ export default function Navbar() {
             </Search>
 
             <Box sx={{ flexGrow: 0 }}>
-              {userState.status === 'loading' ? (
+              {status === 'loading' ? (
                 <Skeleton animation="wave" variant="circular" width={40} height={40} sx={{ bgcolor: grey[500] }} />
               ) : (
-                userState.isAuthenticated ? authenticatedLinks : guestLinks
+                isAuthenticated ? authenticatedLinks : guestLinks
               )}
             </Box>
           </Toolbar>

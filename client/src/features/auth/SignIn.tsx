@@ -9,39 +9,57 @@ import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
 import { Helmet } from 'react-helmet';
-import { Form, Link as RouterLink, useNavigate, useSearchParams } from 'react-router-dom';
-import type { ActionFunctionArgs } from 'react-router-dom';
+import { Link as RouterLink, useNavigate, useSearchParams } from 'react-router-dom';
+import { useForm, SubmitHandler } from 'react-hook-form';
 
-import { AppDispatch } from '../../store.ts';
-import { useAppSelector } from '../../hooks.ts';
-import { selectUser, signIn } from './authSlice.ts';
-
-export function action(dispatch: AppDispatch) {
-  return async function({ request }: ActionFunctionArgs) {
-    const formData = await request.formData();
-    const data = Object.fromEntries(formData);
-
-    dispatch(signIn(data));
-
-    return null;
-  }
-}
+import { useAppSelector, useAppDispatch } from '../../hooks.ts';
+import { selectUser, SignInFormData, useSignInMutation } from './authSlice.ts';
+import { showAlert } from "../alerts/alertsSlice.ts";
+import { isFetchBaseQueryError } from '../../helpers.ts';
 
 export default function SignIn() {
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const { isAuthenticated, status, message } = useAppSelector(selectUser);
+  const {
+    register,
+    handleSubmit,
+    setError,
+    formState: { errors, isSubmitting }
+  } = useForm<SignInFormData>();
 
-  let error;
-  if (status === 'error') {
-    error = message;
-  }
+  const [signIn, { data, error, isSuccess, isError }] = useSignInMutation();
+
+  const dispatch = useAppDispatch();
+
+  const { isAuthenticated } = useAppSelector(selectUser);
+
+  const navigate = useNavigate();
+
+  const [searchParams] = useSearchParams();
+
+  const onSubmit: SubmitHandler<SignInFormData> = formData => signIn(formData);
+
+  useEffect(() => {
+    if (isSuccess) {
+      dispatch(showAlert({ type: 'success', message: data?.message }));
+    }
+  }, [isSuccess]);
+
+  useEffect(() => {
+    if (isError) {
+      if (
+        isFetchBaseQueryError(error) &&
+        typeof error.data === 'object' && error.data != null && 'message' in error.data &&
+        typeof error.data.message === 'string'
+      ) {
+        setError('password', { message: error.data.message });
+      }
+    }
+  }, [isError]);
 
   useEffect(() => {
     if (isAuthenticated) {
       navigate(searchParams.get('path') || '/');
     }
-  }, [isAuthenticated])
+  }, [isAuthenticated]);
 
   return (
     <Container component="main" maxWidth="xs">
@@ -62,25 +80,23 @@ export default function SignIn() {
         <Typography component="h1" variant="h5">
           Sign In
         </Typography>
-        <Box component={Form} method="post">
+        <Box component="form" onSubmit={handleSubmit(onSubmit)}>
           <TextField
-            error={!!error}
+            {...register('email')}
+            error={isError}
             margin="normal"
-            required
             fullWidth
             id="email"
             label="Email Address"
-            name="email"
             autoComplete="email"
             autoFocus
           />
           <TextField
-            error={!!error}
-            helperText={error && error}
+            {...register('password')}
+            error={isError}
+            helperText={errors.password && errors.password.message}
             margin="normal"
-            required
             fullWidth
-            name="password"
             label="Password"
             type="password"
             id="password"
@@ -91,7 +107,7 @@ export default function SignIn() {
             fullWidth
             variant="contained"
             sx={{ mt: 3, mb: 2 }}
-            disabled={status === 'loading'}
+            disabled={isSubmitting}
           >
             Sign In
           </Button>

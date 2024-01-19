@@ -9,61 +9,60 @@ import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
 import { Helmet } from 'react-helmet';
-import { Form, Link as RouterLink, redirect, useActionData, useNavigate, useNavigation } from 'react-router-dom';
-import type { ActionFunctionArgs } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { useForm, SubmitHandler } from 'react-hook-form';
 
-import { AppDispatch } from '../../store.ts';
-import { useAppSelector } from '../../hooks.ts';
-import { server } from '../../config.ts';
+import { useAppSelector, useAppDispatch } from '../../hooks.ts';
+import { SignUpFormData, useSignUpMutation, selectUser } from './authSlice.ts';
 import { showAlert } from '../alerts/alertsSlice.ts';
-import { selectUser } from './authSlice.ts';
-
-interface ActionData {
-  email?: string;
-  password?: string;
-  confirm_password?: string;
-}
-
-export function action(dispatch: AppDispatch) {
-  return async function({ request }: ActionFunctionArgs) {
-    const formData = await request.formData();
-    const data = Object.fromEntries(formData);
-
-    const response = await fetch(`${server}/api/auth/sign-up`, {
-      method: 'POST',
-      body: JSON.stringify(data),
-      headers: {
-        'Content-Type': 'application/json',
-      }
-    });
-
-    if (!response.ok) {
-      const responseData = await response.json();
-      if (responseData.errors) {
-        return responseData.errors
-      }
-      throw new Error(responseData.message)
-    }
-
-    const responseData = await response.json();
-
-    dispatch(showAlert({ type: 'success', message: responseData.message }));
-
-    return redirect('/');
-  }
-}
+import { isFetchBaseQueryError } from '../../helpers.ts';
 
 export default function SignUp() {
-  const navigate = useNavigate();
-  const { state } = useNavigation();
-  const { isAuthenticated } = useAppSelector(selectUser);
-  const errors = useActionData() as ActionData;
+  const {
+    register,
+    handleSubmit,
+    setError,
+    formState: { errors, isSubmitting },
+    getValues
+  } = useForm<SignUpFormData>();
 
+  const [signUp, { data, error, isSuccess, isError }] = useSignUpMutation();
+
+  const dispatch = useAppDispatch();
+
+  const navigate = useNavigate();
+
+  const { isAuthenticated } = useAppSelector(selectUser);
+
+  const onSubmit: SubmitHandler<SignUpFormData> = formData => signUp(formData);
+
+  if (isSuccess) {
+    dispatch(showAlert({ type: 'success', message: data?.message }));
+    navigate('/');
+  }
+
+  useEffect(() => {
+    if (isError) {
+      if (
+        isFetchBaseQueryError(error) &&
+        typeof error.data === 'object' && error.data != null && 'errors' in error.data &&
+        typeof error.data.errors === 'object' && error.data.errors != null
+      ) {
+        for (const key in error.data.errors) {
+          if (key === 'email' || key === 'password' || key === 'confirm_password') {
+            setError(key, { message: error.data.errors[key as keyof typeof error.data.errors] });
+          }
+        }
+      }
+    }
+  }, [isError]);
+
+  // todo see if it can be implemented without effect hook
   useEffect(() => {
     if (isAuthenticated) {
       navigate('/');
     }
-  }, [isAuthenticated])
+  }, [isAuthenticated]);
 
   return (
     <Container component="main" maxWidth="xs">
@@ -84,38 +83,56 @@ export default function SignUp() {
         <Typography component="h1" variant="h5">
           Sign Up
         </Typography>
-        <Box component={Form} method="post">
+        <Box component="form" onSubmit={handleSubmit(onSubmit)}>
           <TextField
-            error={!!errors?.email}
-            helperText={errors?.email && errors.email}
+            {...register('email', {
+              required: 'Email is required',
+              pattern: {
+                value: /\S+@\S+\.\S+/,
+                message: "Enter a valid email",
+              }
+            })}
+            error={!!errors.email}
+            helperText={errors.email && errors.email.message}
             margin="normal"
-            required
             fullWidth
             id="email"
             label="Email Address"
-            name="email"
             autoComplete="email"
             autoFocus
           />
           <TextField
-            error={!!errors?.password}
-            helperText={errors?.password && errors.password}
+            {...register('password', {
+              required: 'Password is required',
+              minLength: {
+                value: 2,
+                message: 'Password must contain at least 2 characters'
+              }
+            })}
+            error={!!errors.password}
+            helperText={errors.password && errors.password.message}
             margin="normal"
-            required
             fullWidth
-            name="password"
             label="Password"
             type="password"
             id="password"
             autoComplete="current-password"
           />
           <TextField
-            error={!!errors?.confirm_password}
-            helperText={errors?.confirm_password && errors.confirm_password}
+            {...register('confirm_password', {
+              required: 'Password confirmation is required',
+              minLength: {
+                value: 2,
+                message: 'Password must contain at least 2 characters'
+              },
+              validate: value => {
+                return value === getValues('password') || 'Passwords must match'
+              }
+            })}
+            error={!!errors.confirm_password}
+            helperText={errors.confirm_password && errors.confirm_password.message}
             margin="normal"
-            required
             fullWidth
-            name="confirm_password"
             label="Confirm Password"
             type="password"
             id="confirm_password"
@@ -126,7 +143,7 @@ export default function SignUp() {
             fullWidth
             variant="contained"
             sx={{ mt: 3, mb: 2 }}
-            disabled={state === 'submitting'}
+            disabled={isSubmitting}
           >
             Sign Up
           </Button>

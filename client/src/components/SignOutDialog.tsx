@@ -5,7 +5,11 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogTitle from '@mui/material/DialogTitle';
 import Slide from '@mui/material/Slide';
 import { TransitionProps } from '@mui/material/transitions';
-import { Form } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+
+import { useAppDispatch } from '../hooks.ts';
+import { signOut } from '../features/auth/authSlice.ts';
+import { showAlert } from '../features/alerts/alertsSlice.ts';
 
 interface SignOutDialogProps {
   open: boolean,
@@ -23,10 +27,21 @@ const Transition = React.forwardRef(function Transition(
 });
 
 export default function SignOutDialog({ open, setOpen, closeUserMenu }: SignOutDialogProps) {
+  const dispatch = useAppDispatch();
+  const navigate = useNavigate();
+
   const handleClose = () => {
     setOpen(false);
     closeUserMenu();
-  };
+  }
+
+  const handleSignOut = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+    e.preventDefault();
+    handleClose();
+    dispatch(signOut());
+    dispatch(showAlert({ type: 'success', message: 'You have successfully signed out' }));
+    navigate('/');
+  }
 
   return (
     <Dialog
@@ -40,9 +55,9 @@ export default function SignOutDialog({ open, setOpen, closeUserMenu }: SignOutD
       <DialogTitle>Are you sure you want to sign out?</DialogTitle>
       <DialogActions>
         <Button variant="outlined" color="primary" onClick={handleClose}>No</Button>
-        <Form method="post" action="sign-out">
-          <Button type="submit" variant="outlined" onClick={handleClose}>Yes</Button>
-        </Form>
+        <form method="post">
+          <Button type="submit" variant="outlined" onClick={e => handleSignOut(e)}>Yes</Button>
+        </form>
       </DialogActions>
     </Dialog>
   );

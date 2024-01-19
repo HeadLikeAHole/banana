@@ -1,80 +1,48 @@
-import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import { createBrowserRouter } from 'react-router-dom';
 
-import { useAppDispatch, useAppSelector } from './hooks.ts';
-import { selectUserToken } from './features/auth/authSlice.ts';
 import App from './App.tsx';
 import AuthRequired from './components/AuthRequired.tsx';
-import SignUp, { action as signUpAction } from './features/auth/SignUp.tsx';
+import SignUp from './features/auth/SignUp.tsx';
 import AccountActivation from './features/auth/AccountActivation.tsx';
-import SignIn, { action as signInAction } from './features/auth/SignIn.tsx';
-import { action as signOutAction } from './features/auth/signOut.ts';
-import RequestPasswordReset, { action as requestPasswordResetAction } from './features/auth/RequestPasswordReset.tsx';
-import ResetPassword, { action as resetPasswordAction } from './features/auth/ResetPassword.tsx';
-import CreateProduct, { action as createProductAction } from './features/products/CreateProduct.tsx';
-import ProductDetail, { loader as productDetailLoader } from './features/products/ProductDetail.tsx';
+import SignIn from './features/auth/SignIn.tsx';
+import RequestPasswordReset from './features/auth/RequestPasswordReset.tsx';
+import ResetPassword from './features/auth/ResetPassword.tsx';
+import CreateProduct from './features/products/CreateProduct.tsx';
+import ProductDetail from './features/products/ProductDetail.tsx';
 
-export default function Router() {
-  const dispatch = useAppDispatch();
-  // const token = useAppSelector(selectUserToken);
-
-  const router = createBrowserRouter([
-    {
-      path: '/',
-      element: <App />,
-      children: [
-        {
-          path: 'sign-up',
-          element: <SignUp />,
-          action: signUpAction(dispatch)
-        },
-        {
-          path: 'activate-account',
-          element: <AccountActivation />
-        },
-        {
-          path: 'sign-in',
-          element: <SignIn />,
-          action: signInAction(dispatch)
-        },
-        {
-          path: 'sign-out',
-          action: signOutAction(dispatch)
-        },
-        {
-          path: 'request-password-reset',
-          element: <RequestPasswordReset />,
-          action: requestPasswordResetAction(dispatch)
-        },
-        {
-          path: 'reset-password',
-          element: <ResetPassword />,
-          action: resetPasswordAction(dispatch)
-        },
-        {
-          path: 'products/create',
-          element: <AuthRequired><CreateProduct /></AuthRequired>,
-          // action: createProductAction(dispatch, token)
-        },
-        {
-          path: 'products/:productID',
-          element: <ProductDetail />,
-          loader: productDetailLoader
-        },
-        {
-          path: 'test',
-          element: <Test />,
-        }
-      ]
-    }
-  ]);
-
-  return (
-    <RouterProvider router={router} />
-  );
-}
-
-function Test() {
-  return (
-    <div>test</div>
-  )
-}
+export const router = createBrowserRouter([
+  {
+    path: '/',
+    element: <App />,
+    children: [
+      {
+        path: 'sign-up',
+        element: <SignUp />
+      },
+      {
+        path: 'activate-account',
+        element: <AccountActivation />
+      },
+      {
+        path: 'sign-in',
+        element: <SignIn />
+      },
+      {
+        path: 'request-password-reset',
+        element: <RequestPasswordReset />
+      },
+      {
+        path: 'reset-password',
+        element: <ResetPassword />
+      },
+      {
+        path: 'products/create',
+        element: <AuthRequired><CreateProduct /></AuthRequired>
+      },
+      // {
+      //   path: 'products/:productID',
+      //   element: <ProductDetail />
+      // }
+    ]
+  }
+]);

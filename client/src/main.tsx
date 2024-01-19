@@ -1,19 +1,20 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { Provider } from 'react-redux';
+import { RouterProvider } from 'react-router-dom';
 
 import './index.css';
-import { store } from './store.ts'
-import Router from './Router.tsx';
-import { fetchUser } from './features/auth/authSlice.ts';
+import { store } from './store.ts';
+import { router } from './router.tsx';
+import { authAPISlice } from './features/auth/authSlice.ts';
 
 function start() {
-  store.dispatch(fetchUser())
+  store.dispatch(authAPISlice.endpoints.getUser.initiate());
 
   ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
       <Provider store={store}>
-        <Router />
+        <RouterProvider router={router} />
       </Provider>
     </React.StrictMode>
   );
